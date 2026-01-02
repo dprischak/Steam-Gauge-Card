@@ -1,0 +1,7 @@
+{
+  "name": "Steam Gauge Card",
+  "render_readme": true,
+  "filename": "steam-gauge-card.js",
+  "content_in_root": false,
+  "homeassistant": "2023.1.0"
+}
