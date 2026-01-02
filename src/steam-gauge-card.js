@@ -593,13 +593,21 @@ class SteamGaugeCard extends HTMLElement {
     
     if (displayText === oldText) return; // No change
     
+    // Check if this is the first update (no previous value stored)
+    const isFirstUpdate = !flipDisplay.dataset.numericValue;
+    
     // Store previous numeric value for animation
     const prevValue = flipDisplay.dataset.numericValue ? parseFloat(flipDisplay.dataset.numericValue) : value;
     flipDisplay.dataset.numericValue = value;
     flipDisplay.dataset.value = displayText;
     
-    // Animate through intermediate values like a real odometer
-    this.animateOdometer(flipDisplay, prevValue, value, decimals, unit);
+    // On first update, render directly without animation to avoid glitches
+    if (isFirstUpdate) {
+      this.renderRotaryDisplay(flipDisplay, value.toFixed(decimals), unit, null);
+    } else {
+      // Animate through intermediate values like a real odometer
+      this.animateOdometer(flipDisplay, prevValue, value, decimals, unit);
+    }
   }
 
   animateOdometer(flipDisplay, fromValue, toValue, decimals, unit) {
@@ -724,36 +732,69 @@ class SteamGaugeCard extends HTMLElement {
         if (inner) {
           const targetDigit = parseInt(char);
           
-          // Get previous position to determine rotation direction
-          const prevPosition = parseFloat(digitEl.dataset.position || targetDigit);
-          const currentCycle = parseInt(digitEl.dataset.currentCycle || 1);
+          // Check if this is initial setup (no position set yet)
+          const isInitialSetup = !digitEl.dataset.position;
           
-          // Calculate new position ensuring forward rotation
-          let newPosition = targetDigit; // No offset needed since we removed the minus sign from digits
-          
-          // If going backwards (e.g., 9 to 0), move to next cycle
-          if (targetDigit < prevPosition && prevPosition - targetDigit > 5) {
-            // This is likely a rollover (9->0), advance to next cycle
-            const nextCycle = currentCycle + 1;
-            if (nextCycle > 2) {
-              // Reset to first cycle
-              digitEl.dataset.currentCycle = '0';
-              newPosition = targetDigit;
-            } else {
-              digitEl.dataset.currentCycle = nextCycle.toString();
-              newPosition = targetDigit + (nextCycle * 10); // 10 digits per cycle
-            }
+          if (isInitialSetup) {
+            // On initial setup, position without animation
+            digitEl.dataset.currentCycle = '1';
+            const newPosition = targetDigit + 10; // Start at second cycle for initial position
+            digitEl.dataset.position = targetDigit.toString();
+            
+            // Disable transition for initial positioning
+            inner.style.transition = 'none';
+            
+            // Wait for DOM to render before measuring and positioning
+            requestAnimationFrame(() => {
+              // Force a reflow to ensure elements are rendered
+              inner.offsetHeight;
+              
+              // Now measure the actual height
+              const digitItem = inner.querySelector('.digit-item');
+              const digitHeight = digitItem ? digitItem.offsetHeight : 28;
+              const offset = -newPosition * digitHeight;
+              
+              inner.style.transform = `translateY(${offset}px)`;
+              
+              // Re-enable transition after another frame
+              requestAnimationFrame(() => {
+                inner.style.transition = '';
+              });
+            });
           } else {
-            // Normal forward movement or same digit
-            newPosition = targetDigit + (currentCycle * 10);
+            // Get previous position to determine rotation direction
+            const prevPosition = parseFloat(digitEl.dataset.position || targetDigit);
+            const currentCycle = parseInt(digitEl.dataset.currentCycle || 1);
+            
+            // Calculate new position ensuring forward rotation
+            let newPosition = targetDigit;
+            
+            // Normal animated update
+            // If going backwards (e.g., 9 to 0), move to next cycle
+            if (targetDigit < prevPosition && prevPosition - targetDigit > 5) {
+              // This is likely a rollover (9->0), advance to next cycle
+              const nextCycle = currentCycle + 1;
+              if (nextCycle > 2) {
+                // Reset to first cycle
+                digitEl.dataset.currentCycle = '0';
+                newPosition = targetDigit;
+              } else {
+                digitEl.dataset.currentCycle = nextCycle.toString();
+                newPosition = targetDigit + (nextCycle * 10); // 10 digits per cycle
+              }
+            } else {
+              // Normal forward movement or same digit
+              newPosition = targetDigit + (currentCycle * 10);
+            }
+            
+            digitEl.dataset.position = targetDigit.toString();
+            
+            // Calculate digit height dynamically based on container size
+            const digitItem = inner.querySelector('.digit-item');
+            const digitHeight = digitItem ? digitItem.offsetHeight : 28;
+            const offset = -newPosition * digitHeight;
+            inner.style.transform = `translateY(${offset}px)`;
           }
-          
-          digitEl.dataset.position = targetDigit.toString();
-          
-          // Calculate digit height dynamically based on container size
-          const digitHeight = inner.querySelector('.digit-item')?.offsetHeight || 28;
-          const offset = -newPosition * digitHeight;
-          inner.style.transform = `translateY(${offset}px)`;
         }
         
         digitIndex++;
