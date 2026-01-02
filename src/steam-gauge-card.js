@@ -48,7 +48,7 @@ class SteamGaugeCard extends HTMLElement {
       <style>
         :host {
           display: block;
-          padding: 16px;
+          padding: 0px;
         }
         .card {
           background: transparent;
