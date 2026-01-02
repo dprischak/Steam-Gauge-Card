@@ -1,8 +1,45 @@
+const STEAM_GAUGE_CARD_VERSION = "0.1";
+
 class SteamGaugeCard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+	this._resizeObserver = null;	
   }
+
+	connectedCallback() {
+	  // Reflow the odometer when container-query sizes change (e.g., devtools open/close)
+	  if (!this._resizeObserver) {
+		this._resizeObserver = new ResizeObserver(() => this._reflowFlipDisplay());
+	  }
+
+	  // Observe the gauge container once it exists
+	  const container = this.shadowRoot?.querySelector('.gauge-container');
+	  if (container) this._resizeObserver.observe(container);
+	}
+
+	disconnectedCallback() {
+	  if (this._resizeObserver) {
+		this._resizeObserver.disconnect();
+	  }
+	}
+
+	_reflowFlipDisplay() {
+	  const flipDisplay = this.shadowRoot?.getElementById('flipDisplay');
+	  if (!flipDisplay || !this.config) return;
+
+	  const raw = flipDisplay.dataset.numericValue;
+	  if (raw === undefined || raw === null || raw === '') return;
+
+	  const value = parseFloat(raw);
+	  if (Number.isNaN(value)) return;
+
+	  const decimals = this.config.decimals !== undefined ? this.config.decimals : 0;
+	  const unit = this.config.unit || '';
+
+	  // IMPORTANT: render directly (no animation) so resize doesn't "spin" the odometer
+	  this.renderRotaryDisplay(flipDisplay, value.toFixed(decimals), unit, null);
+	}
 
   setConfig(config) {
     if (!config.entity) {
@@ -11,10 +48,16 @@ class SteamGaugeCard extends HTMLElement {
     this.config = config;
     this._uniqueId = Math.random().toString(36).substr(2, 9);
     this.render();
+	if (this._hass) {
+	requestAnimationFrame(() => this.updateGauge());
+	}
+	
   }
 
   set hass(hass) {
     this._hass = hass;
+	if (!this.config) return;         
+	if (!this.shadowRoot) return;	
     this.updateGauge();
   }
 
@@ -316,6 +359,14 @@ class SteamGaugeCard extends HTMLElement {
     this.drawSegments(segments, min, max);
     this.drawTicks(min, max);
     this.drawStoppers();
+	if (this._resizeObserver) {
+		this._resizeObserver.disconnect();
+		const container = this.shadowRoot?.querySelector('.gauge-container');
+		if (container) this._resizeObserver.observe(container);
+		}
+		
+	// One extra reflow on next frame so container-query sizes settle
+	requestAnimationFrame(() => this._reflowFlipDisplay());	
   }
 
   renderTitleText(title, fontSize) {
@@ -1336,7 +1387,11 @@ class SteamGaugeCardEditor extends HTMLElement {
 
 customElements.define('steam-gauge-card', SteamGaugeCard);
 customElements.define('steam-gauge-card-editor', SteamGaugeCardEditor);
-
+console.info(
+  `%cSteam Gauge Card%c v${STEAM_GAUGE_CARD_VERSION}`,
+  "color: #03a9f4; font-weight: bold;",
+  "color: inherit;"
+);
 // Register the card with Home Assistant
 window.customCards = window.customCards || [];
 window.customCards.push({
