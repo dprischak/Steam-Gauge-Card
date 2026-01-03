@@ -70,6 +70,8 @@ class SteamGaugeCard extends HTMLElement {
     const uid = this._uniqueId;
     const animationDuration = config.animation_duration !== undefined ? config.animation_duration : 1.2;
     const titleFontSize = config.title_font_size !== undefined ? config.title_font_size : 12;
+    const odometerFontSize = config.odometer_font_size !== undefined ? config.odometer_font_size : 2.5;
+    const odometerVerticalPosition = config.odometer_vertical_position !== undefined ? config.odometer_vertical_position : 120;
     
     // Angle configuration (0 = top, clockwise)
     // Convert from 0=top to SVG coordinate system where 0=right
@@ -126,20 +128,19 @@ class SteamGaugeCard extends HTMLElement {
           filter: drop-shadow(2px 2px 3px rgba(0,0,0,0.3));
         }
         .value-display {
-          position: absolute;
-          left: 50%;
-          top: 50%;
-          transform: translate(-50%, min(20px, 5cqi));
           display: flex;
           flex-direction: column;
-          gap: min(2px, 0.5cqi);
-          justify-content: center;
+          gap: min(${odometerFontSize * 0.4}px, ${odometerFontSize * 0.1}cqi);
+          justify-content: flex-start;
           align-items: center;
           pointer-events: none;
+          width: 200px;
+          height: 200px;
+          padding-top: ${odometerVerticalPosition}px;
         }
         .digits-row {
           display: flex;
-          gap: min(2px, 0.5cqi);
+          gap: min(${odometerFontSize * 0.4}px, ${odometerFontSize * 0.1}cqi);
           justify-content: center;
           align-items: center;
         }
@@ -147,14 +148,14 @@ class SteamGaugeCard extends HTMLElement {
           background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 50%, #0a0a0a 100%);
           color: #f0f0f0;
           font-family: 'Courier New', monospace;
-          font-size: clamp(10px, 5cqi, 20px);
+          font-size: clamp(${odometerFontSize * 2}px, ${odometerFontSize}cqi, ${odometerFontSize * 4}px);
           font-weight: bold;
-          width: clamp(9px, 4.5cqi, 18px);
-          height: clamp(14px, 7cqi, 28px);
+          width: clamp(${odometerFontSize * 1.8}px, ${odometerFontSize * 0.9}cqi, ${odometerFontSize * 3.6}px);
+          height: clamp(${odometerFontSize * 2.8}px, ${odometerFontSize * 1.4}cqi, ${odometerFontSize * 5.6}px);
           display: flex;
           align-items: center;
           justify-content: center;
-          border-radius: clamp(1.5px, 0.75cqi, 3px);
+          border-radius: clamp(${odometerFontSize * 0.3}px, ${odometerFontSize * 0.15}cqi, ${odometerFontSize * 0.6}px);
           box-shadow: 
             inset 0 1px 2px rgba(255,255,255,0.2),
             inset 0 -1px 2px rgba(0,0,0,0.5),
@@ -174,13 +175,13 @@ class SteamGaugeCard extends HTMLElement {
           box-shadow: 0 0 2px rgba(0,0,0,0.8);
         }
         .flip-digit.decimal {
-          width: clamp(4px, 2cqi, 8px);
+          width: clamp(${odometerFontSize * 0.8}px, ${odometerFontSize * 0.4}cqi, ${odometerFontSize * 1.6}px);
           background: transparent;
           box-shadow: none;
           border: none;
         }
         .flip-digit.minus-sign {
-          width: clamp(9px, 4.5cqi, 18px);
+          width: clamp(${odometerFontSize * 1.8}px, ${odometerFontSize * 0.9}cqi, ${odometerFontSize * 3.6}px);
           background: transparent;
           box-shadow: none;
           border: none;
@@ -190,7 +191,7 @@ class SteamGaugeCard extends HTMLElement {
           background: transparent;
           color: #2c1810;
           font-family: 'Georgia', serif;
-          font-size: clamp(8px, 4cqi, 16px);
+          font-size: clamp(${odometerFontSize * 1.6}px, ${odometerFontSize * 0.8}cqi, ${odometerFontSize * 3.2}px);
           width: auto;
           height: auto;
           box-shadow: none;
@@ -213,7 +214,7 @@ class SteamGaugeCard extends HTMLElement {
         }
         .digit-item {
           width: 100%;
-          height: clamp(14px, 7cqi, 28px);
+          height: clamp(${odometerFontSize * 2.8}px, ${odometerFontSize * 1.4}cqi, ${odometerFontSize * 5.6}px);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -295,11 +296,16 @@ class SteamGaugeCard extends HTMLElement {
               <!-- Title text -->
               ${title ? this.renderTitleText(title, titleFontSize) : ''}
               
-              <!-- Center hub -->
+              <!-- Center hub background -->
               <circle cx="100" cy="100" r="12" fill="url(#brassRim-${uid})" stroke="#6d5d4b" stroke-width="1"/>
               <circle cx="100" cy="100" r="8" fill="#4a4034" opacity="0.6"/>
               
-              <!-- Needle -->
+              <!-- Odometer embedded in SVG (rendered before needle) -->
+              <foreignObject x="0" y="0" width="200" height="200">
+                <div xmlns="http://www.w3.org/1999/xhtml" class="value-display" id="flipDisplay"></div>
+              </foreignObject>
+              
+              <!-- Needle (rendered after odometer so it's on top) -->
               <g id="needle" style="transform-origin: 100px 100px; transition: transform ${animationDuration}s ease-out;">
                 <!-- Needle shadow -->
                 <path d="M 100 100 L 95 95 L 97 30 L 100 25 L 103 30 L 105 95 Z" 
@@ -318,7 +324,7 @@ class SteamGaugeCard extends HTMLElement {
               <!-- Needle stoppers -->
               <g id="stoppers"></g>
               
-              <!-- Center rivet -->
+              <!-- Center rivet (on top of needle) -->
               <circle cx="100" cy="100" r="5" class="rivet"/>
               <circle cx="100" cy="100" r="3.5" class="screw-detail"/>
               <line x1="97" y1="100" x2="103" y2="100" class="screw-detail"/>
@@ -350,7 +356,6 @@ class SteamGaugeCard extends HTMLElement {
               <circle cx="70" cy="120" r="1" fill="#6d5d4b" opacity="0.2"/>
               <ellipse cx="130" cy="50" rx="3" ry="1.5" fill="#8B7355" opacity="0.1"/>
             </svg>
-            <div class="value-display" id="flipDisplay"></div>
           </div>
         </div>
       </ha-card>
@@ -885,6 +890,8 @@ class SteamGaugeCard extends HTMLElement {
       entity: '',
       title: 'Gauge',
       title_font_size: 12,
+      odometer_font_size: 2.5,
+      odometer_vertical_position: 120,
       min: 0,
       max: 100,
       unit: '',
@@ -1064,6 +1071,16 @@ class SteamGaugeCardEditor extends HTMLElement {
         <div class="config-row">
           <label>Title Font Size</label>
           <input type="number" id="title_font_size" min="6" max="24" value="${this._config.title_font_size !== undefined ? this._config.title_font_size : 12}">
+        </div>
+        
+        <div class="config-row">
+          <label>Odometer Size</label>
+          <input type="number" id="odometer_font_size" min="1" max="10" step="0.5" value="${this._config.odometer_font_size !== undefined ? this._config.odometer_font_size : 2.5}">
+        </div>
+        
+        <div class="config-row">
+          <label>Odometer Vertical Position</label>
+          <input type="number" id="odometer_vertical_position" min="50" max="150" step="5" value="${this._config.odometer_vertical_position !== undefined ? this._config.odometer_vertical_position : 120}">
         </div>
         
         <div class="config-row">
@@ -1252,7 +1269,7 @@ class SteamGaugeCardEditor extends HTMLElement {
       this.removeEventListener('click', this._clickHandler);
     }
 
-    const inputs = ['title', 'title_font_size', 'unit', 'min', 'max', 'decimals', 'start_angle', 'end_angle', 'animation_duration'];
+    const inputs = ['title', 'title_font_size', 'odometer_font_size', 'odometer_vertical_position', 'unit', 'min', 'max', 'decimals', 'start_angle', 'end_angle', 'animation_duration'];
     inputs.forEach(id => {
       const input = this.querySelector(`#${id}`);
       if (input) {
@@ -1287,6 +1304,8 @@ class SteamGaugeCardEditor extends HTMLElement {
     const entityEl = this.querySelector('#entity-search');
     const titleEl = this.querySelector('#title');
     const titleFontSizeEl = this.querySelector('#title_font_size');
+    const odometerFontSizeEl = this.querySelector('#odometer_font_size');
+    const odometerVerticalPositionEl = this.querySelector('#odometer_vertical_position');
     const unitEl = this.querySelector('#unit');
     const minEl = this.querySelector('#min');
     const maxEl = this.querySelector('#max');
@@ -1295,13 +1314,15 @@ class SteamGaugeCardEditor extends HTMLElement {
     const endAngleEl = this.querySelector('#end_angle');
     const animDurationEl = this.querySelector('#animation_duration');
 
-    if (!entityEl || !titleEl || !titleFontSizeEl || !unitEl || !minEl || !maxEl || !decimalsEl || !startAngleEl || !endAngleEl || !animDurationEl) return;
+    if (!entityEl || !titleEl || !titleFontSizeEl || !odometerFontSizeEl || !odometerVerticalPositionEl || !unitEl || !minEl || !maxEl || !decimalsEl || !startAngleEl || !endAngleEl || !animDurationEl) return;
 
     const newConfig = {
       ...this._config,
       entity: entityEl.value,
       title: titleEl.value,
       title_font_size: parseInt(titleFontSizeEl.value),
+      odometer_font_size: parseFloat(odometerFontSizeEl.value),
+      odometer_vertical_position: parseInt(odometerVerticalPositionEl.value),
       unit: unitEl.value,
       min: parseFloat(minEl.value),
       max: parseFloat(maxEl.value),
