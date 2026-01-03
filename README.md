@@ -14,6 +14,8 @@ A custom Lovelace card that displays sensor values as a vintage steam engine gau
 - ⚙️ Detailed tick marks and numbers
 - ⏱️ Configurable animation speed
 - 📏 Adjustable title font size
+- 🔢 Configurable odometer size (1-10 scale)
+- 📍 Adjustable odometer vertical position
 
 ## Installation
 
@@ -83,6 +85,8 @@ unit: "°F"
 start_angle: 220  # Start further left
 end_angle: 140    # End further right
 title_font_size: 14
+odometer_font_size: 3.5  # Larger odometer
+odometer_vertical_position: 125  # Move down slightly
 ```
 
 ## Configuration Options
@@ -100,6 +104,8 @@ title_font_size: 14
 | `end_angle` | number | No | 160 | End angle of gauge arc (0 = top, clockwise) |
 | `animation_duration` | number | No | 1.2 | Animation duration in seconds |
 | `title_font_size` | number | No | 12 | Font size for the title text |
+| `odometer_font_size` | number | No | 2.5 | Size of the odometer display (1-10 scale) |
+| `odometer_vertical_position` | number | No | 120 | Vertical position of odometer in pixels (50-150) |
 
 ### Default Segments
 
@@ -244,6 +250,8 @@ unit: "W"
 decimals: 0
 animation_duration: 0.5  # Faster animation
 title_font_size: 11
+odometer_font_size: 2    # Smaller odometer
+odometer_vertical_position: 115  # Position higher
 segments:
   - from: 0
     to: 1000
@@ -265,6 +273,7 @@ segments:
 - **Glass Effect**: Subtle highlight overlay simulating glass cover
 - **Red Needle**: Bold red needle with shadow and highlight
 - **Flip Display**: Digital odometer-style display with smooth rolling animation
+- **Configurable Odometer**: Adjustable size (1-10 scale) and vertical position (50-150px)
 - **Smooth Animation**: Configurable animation duration (default 1.2s) with ease-out transition
 - **Multi-line Titles**: Support for up to 3 lines of text in title using `\n`
 
