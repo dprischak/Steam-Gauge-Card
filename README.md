@@ -16,6 +16,8 @@ A custom Lovelace card that displays sensor values as a vintage steam engine gau
 - 📏 Adjustable title font size
 - 🔢 Configurable odometer size (1-10 scale)
 - 📍 Adjustable odometer vertical position
+- 💍 Optional decorative rings (brass or silver)
+- 🎨 Clean transparent background
 
 ## Installation
 
@@ -87,6 +89,7 @@ end_angle: 140    # End further right
 title_font_size: 14
 odometer_font_size: 3.5  # Larger odometer
 odometer_vertical_position: 125  # Move down slightly
+ring_style: brass  # Add decorative brass ring
 ```
 
 ## Configuration Options
@@ -106,6 +109,7 @@ odometer_vertical_position: 125  # Move down slightly
 | `title_font_size` | number | No | 12 | Font size for the title text |
 | `odometer_font_size` | number | No | 2.5 | Size of the odometer display (1-10 scale) |
 | `odometer_vertical_position` | number | No | 120 | Vertical position of odometer in pixels (50-150) |
+| `ring_style` | string | No | 'none' | Decorative ring style: 'none', 'brass', or 'silver' |
 
 ### Default Segments
 

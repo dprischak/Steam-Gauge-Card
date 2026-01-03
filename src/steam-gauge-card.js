@@ -1,4 +1,4 @@
-const STEAM_GAUGE_CARD_VERSION = "0.2";
+const STEAM_GAUGE_CARD_VERSION = "0.2.1";
 
 class SteamGaugeCard extends HTMLElement {
   constructor() {
@@ -72,6 +72,7 @@ class SteamGaugeCard extends HTMLElement {
     const titleFontSize = config.title_font_size !== undefined ? config.title_font_size : 12;
     const odometerFontSize = config.odometer_font_size !== undefined ? config.odometer_font_size : 2.5;
     const odometerVerticalPosition = config.odometer_vertical_position !== undefined ? config.odometer_vertical_position : 120;
+    const ringStyle = config.ring_style !== undefined ? config.ring_style : 'brass';
     
     // Angle configuration (0 = top, clockwise)
     // Convert from 0=top to SVG coordinate system where 0=right
@@ -97,14 +98,8 @@ class SteamGaugeCard extends HTMLElement {
         }
         .card {
           background: transparent;
-          border-radius: 8px;
-          padding: 20px;
-          box-shadow: none;
-          border: none;
+          padding: 0px;
           position: relative;
-        }
-        .card::before {
-          display: none;
         }
         .title {
           text-align: center;
@@ -251,6 +246,15 @@ class SteamGaugeCard extends HTMLElement {
                   <stop offset="100%" style="stop-color:#a68038;stop-opacity:1" />
                 </linearGradient>
                 
+                <!-- Gradient for silver rim -->
+                <linearGradient id="silverRim-${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#e8e8e8;stop-opacity:1" />
+                  <stop offset="25%" style="stop-color:#ffffff;stop-opacity:1" />
+                  <stop offset="50%" style="stop-color:#c0c0c0;stop-opacity:1" />
+                  <stop offset="75%" style="stop-color:#e0e0e0;stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#b0b0b0;stop-opacity:1" />
+                </linearGradient>
+                
                 <!-- Shadow filter -->
                 <filter id="innerShadow-${uid}">
                   <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
@@ -272,11 +276,7 @@ class SteamGaugeCard extends HTMLElement {
                 </filter>
               </defs>
               
-              <!-- Outer brass rim -->
-              <circle cx="100" cy="100" r="95" fill="url(#brassRim-${uid})" stroke="#8B7355" stroke-width="2"/>
-              
-              <!-- Inner rim shadow -->
-              <circle cx="100" cy="100" r="88" fill="none" stroke="rgba(0,0,0,0.3)" stroke-width="3"/>
+              ${this.renderRim(ringStyle, uid)}
               
               <!-- Gauge face -->
               <circle cx="100" cy="100" r="85" fill="url(#gaugeFace-${uid})" filter="url(#aged-${uid})"/>
@@ -385,6 +385,27 @@ class SteamGaugeCard extends HTMLElement {
       const y = startY + (index * lineHeight);
       return `<text x="100" y="${y}" text-anchor="middle" font-size="${fontSize}" font-weight="bold" fill="#3e2723" font-family="Georgia, serif" style="text-shadow: 1px 1px 2px rgba(255,255,255,0.5);">${line}</text>`;
     }).join('\n');
+  }
+
+  renderRim(ringStyle, uid) {
+    if (ringStyle === 'brass') {
+      return `
+              <!-- Outer brass rim -->
+              <circle cx="100" cy="100" r="95" fill="url(#brassRim-${uid})" stroke="#8B7355" stroke-width="2"/>
+              
+              <!-- Inner rim shadow -->
+              <circle cx="100" cy="100" r="88" fill="none" stroke="rgba(0,0,0,0.3)" stroke-width="3"/>
+      `;
+    } else if (ringStyle === 'silver') {
+      return `
+              <!-- Outer silver rim -->
+              <circle cx="100" cy="100" r="95" fill="url(#silverRim-${uid})" stroke="#999999" stroke-width="2"/>
+              
+              <!-- Inner rim shadow -->
+              <circle cx="100" cy="100" r="88" fill="none" stroke="rgba(0,0,0,0.3)" stroke-width="3"/>
+      `;
+    }
+    return ''; // No ring
   }
 
   drawSegments(segments, min, max) {
@@ -892,6 +913,7 @@ class SteamGaugeCard extends HTMLElement {
       title_font_size: 12,
       odometer_font_size: 2.5,
       odometer_vertical_position: 120,
+      ring_style: 'none',
       min: 0,
       max: 100,
       unit: '',
@@ -1084,6 +1106,15 @@ class SteamGaugeCardEditor extends HTMLElement {
         </div>
         
         <div class="config-row">
+          <label>Ring Style</label>
+          <select id="ring_style">
+            <option value="none" ${(!this._config.ring_style || this._config.ring_style === 'none') ? 'selected' : ''}>None</option>
+            <option value="brass" ${this._config.ring_style === 'brass' ? 'selected' : ''}>Brass</option>
+            <option value="silver" ${this._config.ring_style === 'silver' ? 'selected' : ''}>Silver</option>
+          </select>
+        </div>
+        
+        <div class="config-row">
           <label>Unit</label>
           <input type="text" id="unit" value="${this._config.unit || ''}" placeholder="e.g., °F, PSI">
         </div>
@@ -1269,7 +1300,7 @@ class SteamGaugeCardEditor extends HTMLElement {
       this.removeEventListener('click', this._clickHandler);
     }
 
-    const inputs = ['title', 'title_font_size', 'odometer_font_size', 'odometer_vertical_position', 'unit', 'min', 'max', 'decimals', 'start_angle', 'end_angle', 'animation_duration'];
+    const inputs = ['title', 'title_font_size', 'odometer_font_size', 'odometer_vertical_position', 'ring_style', 'unit', 'min', 'max', 'decimals', 'start_angle', 'end_angle', 'animation_duration'];
     inputs.forEach(id => {
       const input = this.querySelector(`#${id}`);
       if (input) {
@@ -1306,6 +1337,7 @@ class SteamGaugeCardEditor extends HTMLElement {
     const titleFontSizeEl = this.querySelector('#title_font_size');
     const odometerFontSizeEl = this.querySelector('#odometer_font_size');
     const odometerVerticalPositionEl = this.querySelector('#odometer_vertical_position');
+    const ringStyleEl = this.querySelector('#ring_style');
     const unitEl = this.querySelector('#unit');
     const minEl = this.querySelector('#min');
     const maxEl = this.querySelector('#max');
@@ -1314,7 +1346,7 @@ class SteamGaugeCardEditor extends HTMLElement {
     const endAngleEl = this.querySelector('#end_angle');
     const animDurationEl = this.querySelector('#animation_duration');
 
-    if (!entityEl || !titleEl || !titleFontSizeEl || !odometerFontSizeEl || !odometerVerticalPositionEl || !unitEl || !minEl || !maxEl || !decimalsEl || !startAngleEl || !endAngleEl || !animDurationEl) return;
+    if (!entityEl || !titleEl || !titleFontSizeEl || !odometerFontSizeEl || !odometerVerticalPositionEl || !ringStyleEl || !unitEl || !minEl || !maxEl || !decimalsEl || !startAngleEl || !endAngleEl || !animDurationEl) return;
 
     const newConfig = {
       ...this._config,
@@ -1323,6 +1355,7 @@ class SteamGaugeCardEditor extends HTMLElement {
       title_font_size: parseInt(titleFontSizeEl.value),
       odometer_font_size: parseFloat(odometerFontSizeEl.value),
       odometer_vertical_position: parseInt(odometerVerticalPositionEl.value),
+      ring_style: ringStyleEl.value,
       unit: unitEl.value,
       min: parseFloat(minEl.value),
       max: parseFloat(maxEl.value),

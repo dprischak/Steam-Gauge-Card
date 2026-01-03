@@ -1,3 +1,10 @@
+## v0.2.1
+
+### Features
+- Added configurable ring style with three options: none (default), brass, or silver
+- Removed grey card background for cleaner appearance
+- Decorative corner rivets now visible on transparent background
+
 ## v0.2
 
 ### Bug Fixes
