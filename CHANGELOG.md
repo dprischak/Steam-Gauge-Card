@@ -1,3 +1,12 @@
+## v0.2
+
+### Bug Fixes
+- Needle now renders over the odometer.
+
+### Features
+- You can now resize the odometer numbers
+- You can change the vertical position of the odometer
+
 ## v0.1
 
 ### Features

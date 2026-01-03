@@ -1,4 +1,4 @@
-const STEAM_GAUGE_CARD_VERSION = "0.1";
+const STEAM_GAUGE_CARD_VERSION = "0.2";
 
 class SteamGaugeCard extends HTMLElement {
   constructor() {
